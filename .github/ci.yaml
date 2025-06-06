@@ -1,5 +1,5 @@
 name: Build and Deploy Pipeline
-
+# This workflow triggers on any push to the 'main' branch.
 on:
   push:
     branches: [ "main" ]
@@ -8,13 +8,13 @@ jobs:
   build-push-and-update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # This is required to push a commit back to the repo
 
     steps:
-      - name: Checkout code
+      - name: Checkout code #Check out the repository's code so the workflow can access it.
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.PAT }} # We need a PAT here to be able to push back to the repo.
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -33,7 +33,7 @@ jobs:
           tags: |
             type=sha,prefix=,format=short
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image #Build and push the Docker image to Docker Hub.
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -48,9 +48,9 @@ jobs:
           wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O $HOME/bin/yq
           chmod +x $HOME/bin/yq
 
-      - name: Update image tag in values.yaml
+      - name: Update image tag in values.yaml # Use yq to update the image tag in the Helm chart's values
         run: |
-          # Using .version to get the clean tag (e.g., 'a1b2c3d')
+          # Using steps.meta.outputs.version to get the clean tag 
           yq e '.image.tag = "${{ steps.meta.outputs.version }}"' -i 'kubernetes/my-app-chart/values.yaml'
 
       - name: Commit and push changes
@@ -58,6 +58,6 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add kubernetes/my-app-chart/values.yaml
-          # Using .version in the commit message for the clean tag
+          # Using steps.meta.outputs.version in the commit message for the clean tag
           git diff --quiet && git diff --staged --quiet || git commit -m "ci: update image tag to ${{ steps.meta.outputs.version }}"
           git push
