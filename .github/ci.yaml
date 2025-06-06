@@ -3,9 +3,12 @@ name: Build and Deploy Pipeline
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'kubernetes/my-app-chart/values.yaml'
 
 jobs:
   build-push-and-update:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: write # This is required to push a commit back to the repo
