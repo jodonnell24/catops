@@ -1,5 +1,4 @@
 name: Build and Deploy Pipeline
-
 # This workflow triggers on any push to the 'main' branch.
 on:
   push:
@@ -9,29 +8,23 @@ jobs:
   build-push-and-update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # push a commit back to the repo
+      contents: write # This is required to push a commit back to the repo
 
     steps:
-      # Check out the repository's code so the workflow can access it.
-      - name: Checkout code
+      - name: Checkout code #Check out the repository's code so the workflow can access it.
         uses: actions/checkout@v4
         with:
-          # We need a PAT here to be able to push back to the repo.
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }} # Use the built-in GITHUB_TOKEN for secure push operations.
 
-      # Set up Docker Buildx 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Log in to Docker Hub 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      #  Generate a unique image tag from the Git commit SHA.
-      # every commit gets a unique traceable image.
       - name: Generate image metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -40,35 +33,31 @@ jobs:
           tags: |
             type=sha,prefix=,format=short
 
-      # Build and push the Docker image to Docker Hub.
-      - name: Build and push Docker image
+      - name: Build and push Docker image #Build and push the Docker image to Docker Hub.
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          # Use the tag generated in the previous step.
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      #  Install 'yq', to edit YAML files.
       - name: Install yq
         run: |
-          mkdir -p $HOME/bin 
+          mkdir -p $HOME/bin
+          echo "$HOME/bin" >> $GITHUB_PATH
           wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O $HOME/bin/yq
           chmod +x $HOME/bin/yq
-          echo "$HOME/bin" >> $GITHUB_PATH
 
-
-      #  Use yq to update the image tag in the Helm chart's values.
-      - name: Update image tag in values.yaml
+      - name: Update image tag in values.yaml # Use yq to update the image tag in the Helm chart's values
         run: |
+          # Using steps.meta.outputs.version to get the clean tag 
           yq e '.image.tag = "${{ steps.meta.outputs.version }}"' -i 'kubernetes/my-app-chart/values.yaml'
 
-      #  Commit the changed values.yaml file back to the repository.
       - name: Commit and push changes
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add kubernetes/my-app-chart/values.yaml
+          # Using steps.meta.outputs.version in the commit message for the clean tag
           git diff --quiet && git diff --staged --quiet || git commit -m "ci: update image tag to ${{ steps.meta.outputs.version }}"
           git push
