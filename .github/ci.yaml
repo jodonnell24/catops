@@ -1,0 +1,65 @@
+name: Build and Deploy Pipeline
+# This workflow triggers on any push to the 'main' branch.
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-push-and-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # This is required to push a commit back to the repo
+
+    steps:
+      - name: Checkout code # Check out the repository's code so the workflow can access it.
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} # Use the built-in GITHUB_TOKEN for secure push operations.
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Generate image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/catops
+          tags: |
+            type=sha,prefix=,format=short
+
+      - name: Build and push Docker image # To Docker Hub.
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Set up yq
+        uses: mikefarah/setup-yq-action@v2
+        with:
+          version: 'v4.30.8' # Specify the desired version of yq
+
+      - name: Update image tag in values.yaml # Use yq to update the image tag in the Helm chart's values
+        run: |
+          # Using steps.meta.outputs.version to get the clean tag 
+          yq e '.image.tag = "${{ steps.meta.outputs.version }}"' -i 'kubernetes/my-app-chart/values.yaml'
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add kubernetes/my-app-chart/values.yaml
+          # Using steps.meta.outputs.version in the commit message for the clean tag
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes detected. Skipping commit."
+          else
+            git commit -m "ci: update image tag to ${{ steps.meta.outputs.version }}"
+            git push
+          fi
