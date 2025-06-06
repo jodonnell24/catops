@@ -61,5 +61,9 @@ jobs:
           git config --global user.email "actions@github.com"
           git add kubernetes/my-app-chart/values.yaml
           # Using steps.meta.outputs.version in the commit message for the clean tag
-          git diff --quiet && git diff --staged --quiet || git commit -m "ci: update image tag to ${{ steps.meta.outputs.version }}"
-          git push
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes detected. Skipping commit."
+          else
+            git commit -m "ci: update image tag to ${{ steps.meta.outputs.version }}"
+            git push
+          fi
