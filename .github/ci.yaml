@@ -11,7 +11,7 @@ jobs:
       contents: write # This is required to push a commit back to the repo
 
     steps:
-      - name: Checkout code #Check out the repository's code so the workflow can access it.
+      - name: Checkout code # Check out the repository's code so the workflow can access it.
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }} # Use the built-in GITHUB_TOKEN for secure push operations.
@@ -33,7 +33,7 @@ jobs:
           tags: |
             type=sha,prefix=,format=short
 
-      - name: Build and push Docker image #Build and push the Docker image to Docker Hub.
+      - name: Build and push Docker image # To Docker Hub.
         uses: docker/build-push-action@v5
         with:
           context: .
