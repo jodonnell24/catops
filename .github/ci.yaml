@@ -14,7 +14,7 @@ jobs:
       - name: Checkout code #Check out the repository's code so the workflow can access it.
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT }} # We need a PAT here to be able to push back to the repo.
+          token: ${{ secrets.GITHUB_TOKEN }} # Use the built-in GITHUB_TOKEN for secure push operations.
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
