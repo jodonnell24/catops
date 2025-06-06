@@ -46,6 +46,8 @@ jobs:
           mkdir -p $HOME/bin
           echo "$HOME/bin" >> $GITHUB_PATH
           wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O $HOME/bin/yq
+          wget https://github.com/mikefarah/yq/releases/latest/download/sha256sum.txt -O $HOME/bin/sha256sum.txt
+          (cd $HOME/bin && sha256sum -c --ignore-missing sha256sum.txt)
           chmod +x $HOME/bin/yq
 
       - name: Update image tag in values.yaml # Use yq to update the image tag in the Helm chart's values
