@@ -14,7 +14,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PATrepo }}
+          token: ${{ secrets.PAT }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -50,12 +50,14 @@ jobs:
 
       - name: Update image tag in values.yaml
         run: |
-          yq e '.image.tag = "${{ steps.meta.outputs.tags }}"' -i 'kubernetes/my-app-chart/values.yaml'
+          # Using .version to get the clean tag (e.g., 'a1b2c3d')
+          yq e '.image.tag = "${{ steps.meta.outputs.version }}"' -i 'kubernetes/my-app-chart/values.yaml'
 
       - name: Commit and push changes
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add kubernetes/my-app-chart/values.yaml
-          git diff --quiet && git diff --staged --quiet || git commit -m "ci: update image tag to ${{ steps.meta.outputs.tags }}"
+          # Using .version in the commit message for the clean tag
+          git diff --quiet && git diff --staged --quiet || git commit -m "ci: update image tag to ${{ steps.meta.outputs.version }}"
           git push
