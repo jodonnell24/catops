@@ -49,7 +49,7 @@ jobs:
         run: |
           mkdir -p $HOME/bin 
           wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O $HOME/bin/yq
-          chmod +x $HOME/bin/yqAdd 
+          chmod +x $HOME/bin/yq
           echo "$HOME/bin" >> $GITHUB_PATH
 
 
