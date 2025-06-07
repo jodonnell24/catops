@@ -1,0 +1,30 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: catops-gateway
+spec:
+  selector:
+    istio: ingressgateway # use Istio's default ingress gateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "cat.screener.properties" # <-- YOUR DOMAIN HERE
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: catops-vs
+spec:
+  hosts:
+  - "cat.screener.properties" # <-- YOUR DOMAIN HERE
+  gateways:
+  - catops-gateway
+  http:
+  - route:
+    - destination:
+        host: catops-app # The name of your Kubernetes Service
+        port:
+          number: 8080 # The port your Service is listening on
