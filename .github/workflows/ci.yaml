@@ -44,11 +44,19 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Set up yq
-        uses: mikefarah/setup-yq-action@v2
-        with:
-          version: 'v4.30.8' # Specify the desired version of yq
+      
+      - name: Install yq
+        run: |
+          mkdir -p $HOME/bin 
+          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O $HOME/bin/yq
+          chmod +x $HOME/bin/yqAdd 
+          echo "$HOME/bin" >> $GITHUB_PATH
 
+
+      #  Use yq to update the image tag in the Helm chart's values.
+      - name: Update image tag in values.yaml
+        run: |
+          yq e '.image.tag = "${{ steps.meta.outputs.version }}"' -i 'kubernetes/my-app-chart/values.yaml'
       - name: Update image tag in values.yaml # Use yq to update the image tag in the Helm chart's values
         run: |
           # Using steps.meta.outputs.version to get the clean tag 
