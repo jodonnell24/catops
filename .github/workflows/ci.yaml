@@ -52,11 +52,6 @@ jobs:
           chmod +x $HOME/bin/yq
           echo "$HOME/bin" >> $GITHUB_PATH
 
-
-      #  Use yq to update the image tag in the Helm chart's values.
-      - name: Update image tag in values.yaml
-        run: |
-          yq e '.image.tag = "${{ steps.meta.outputs.version }}"' -i 'kubernetes/my-app-chart/values.yaml'
       - name: Update image tag in values.yaml # Use yq to update the image tag in the Helm chart's values
         run: |
           # Using steps.meta.outputs.version to get the clean tag 
