@@ -44,10 +44,13 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Set up yq
-        uses: mikefarah/setup-yq-action@v2
-        with:
-          version: 'v4.30.8' # Specify the desired version of yq
+      
+      - name: Install yq
+        run: |
+          mkdir -p $HOME/bin 
+          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O $HOME/bin/yq
+          chmod +x $HOME/bin/yq
+          echo "$HOME/bin" >> $GITHUB_PATH
 
       - name: Update image tag in values.yaml # Use yq to update the image tag in the Helm chart's values
         run: |
